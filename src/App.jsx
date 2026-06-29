@@ -20,6 +20,130 @@ const LOADER_MESSAGES = [
   "Drafting Mom's emergency warning..."
 ];
 
+function analyzeProductLocally(product) {
+  const name = product.name || "this product";
+  const brand = product.brand || "this brand";
+  const ingredients = (product.ingredients_text || "").toLowerCase();
+  
+  // Detect red-flag ingredients
+  const hasPalm = ingredients.includes("palm") || ingredients.includes("vegetable oil") || ingredients.includes("fat") || ingredients.includes("palmolein");
+  const hasSugar = ingredients.includes("sugar") || ingredients.includes("syrup") || ingredients.includes("fructose") || ingredients.includes("sweetener") || ingredients.includes("sucrose");
+  const hasSalt = ingredients.includes("salt") || ingredients.includes("sodium") || ingredients.includes("monosodium");
+  const hasMaida = ingredients.includes("maida") || ingredients.includes("refined flour") || ingredients.includes("refined wheat") || ingredients.includes("wheat flour");
+  const hasChemicals = ingredients.includes("preservative") || ingredients.includes("color") || ingredients.includes("flavour") || ingredients.includes("acid") || ingredients.includes("e621") || ingredients.includes("e150") || ingredients.includes("e338");
+
+  // Determine danger level
+  let flagsCount = 0;
+  if (hasPalm) flagsCount++;
+  if (hasSugar) flagsCount++;
+  if (hasSalt) flagsCount++;
+  if (hasMaida) flagsCount++;
+
+  let dangerLevel = "safe";
+  let ratingLabel = "Safe Choice";
+  if (flagsCount >= 3) {
+    dangerLevel = "danger";
+    ratingLabel = "Call Your Doctor";
+  } else if (flagsCount === 2) {
+    dangerLevel = "concerning";
+    ratingLabel = "Concerning";
+  } else if (flagsCount === 1) {
+    dangerLevel = "meh";
+    ratingLabel = "Caution Advised";
+  }
+
+  // Suspicious Ingredients list
+  const suspiciousIngredients = [];
+  if (hasPalm) {
+    suspiciousIngredients.push({ name: "Palm Oil / Palmolein", danger: "concerning", info: "Highly saturated cheap frying oil. Poor cardiovascular profile." });
+  }
+  if (hasSugar) {
+    suspiciousIngredients.push({ name: "Refined Sugar / Syrup", danger: "danger", info: "Fast-absorbing sugar that spikes insulin levels and causes crash." });
+  }
+  if (hasMaida) {
+    suspiciousIngredients.push({ name: "Refined Wheat Flour (Maida)", danger: "concerning", info: "Starchy white flour stripped of all natural fiber and nutrients." });
+  }
+  if (hasSalt) {
+    suspiciousIngredients.push({ name: "Excessive Sodium / Salt", danger: "meh", info: "High sodium intake is linked directly to hypertension and water retention." });
+  }
+  if (hasChemicals) {
+    suspiciousIngredients.push({ name: "Additives & Preservatives", danger: "concerning", info: "Synthesized chemicals used to artificially prolong shelf life." });
+  }
+
+  if (suspiciousIngredients.length === 0) {
+    suspiciousIngredients.push({ name: "Processed Ingredients", danger: "safe", info: "Minimal processed ingredients detected. Looks relatively clean!" });
+  }
+
+  // Chronic Risks
+  const depleted = ["Hydration", "Vitamin Balance"];
+  const diseases = ["General metabolic load"];
+  if (hasSugar) {
+    depleted.push("B-Vitamins");
+    diseases.push("Type 2 Diabetes risk");
+  }
+  if (hasPalm) {
+    depleted.push("Antioxidants");
+    diseases.push("Cardiovascular load");
+  }
+  if (hasSalt) {
+    depleted.push("Calcium");
+    diseases.push("Hypertension risk");
+  }
+
+  // Healthy Swaps
+  let swapName = "Roasted Makhana (Foxnuts) / Sprouted Salads";
+  let swapDesc = "Hand-roasted makhana with a drop of ghee and rock salt, or fresh home-sprouted green grams.";
+  if (hasSugar) {
+    swapName = "Fresh Seasonal Fruit or Dates";
+    swapDesc = "Satisfy your sweet cravings naturally with fiber-rich dates or fresh sweet fruits.";
+  } else if (hasSalt) {
+    swapName = "Roasted Bengal Gram (Chana)";
+    swapDesc = "A crunchy, high-protein snack seasoned naturally with salt and pepper.";
+  }
+
+  let flags = [];
+  if (hasPalm) flags.push("Palm Oil");
+  if (hasSugar) flags.push("Refined Sugar");
+  if (hasSalt) flags.push("High Sodium");
+  if (hasMaida) flags.push("Maida (Refined Flour)");
+  const flagText = flags.length > 0 ? flags.join(" + ") : "Processed Additives";
+
+  const roasts = {
+    doctor: {
+      en: `ALERT: "${name}" by "${brand}" contains ${flagText}. Medically, this is an inflammatory cocktail for your arteries. I advise putting this bag down before your liver goes on a full strike!`,
+      hi: `SAVDHAN: "${name}" me ${flagText} paya gaya hai. Dil aur kidneys ki bhalai ke liye isse abhi door rakhein, warna medical bills asmaan chhuenge!`
+    },
+    mom: {
+      en: `Oh beta! Why are you eating "${name}"? It has ${flagText}! Your cousin Ramesh eats raw sprouts and runs 5km, and you are scanning barcodes to eat this processed garbage. Stop immediately!`,
+      hi: `Beta, ye "${name}" kya chal raha hai? Isme ${flagText} bhara pada hai. Ramesh ko dekho kitna healthy hai, aur tum ye chemical ka packet chaba rahe ho. Chhodo isse!`
+    },
+    comedian: {
+      en: `Let's look at "${name}". The ingredient list reads like a chemical factory manifest: ${flagText}. Your stomach needs a factory reset just to process this!`,
+      hi: `Bhai, ye "${name}" ke ingredients dekhlo. Khaas kar ye ${flagText}. Lagta hai factory ka waste packet me bhar ke bech diya hai!`
+    },
+    professor: {
+      en: `A detailed chemical analysis of "${name}" reveals a lipid-sucrose matrix dominated by ${flagText}. Consuming this induces molecular oxidative stress. Highly inadvisable.`,
+      hi: `Is padarth "${name}" me ${flagText} ki matra atyadhik hai. Refined wheat carbs aur saturated lipids ka ye blend digestive system ko crash kar deta hai.`
+    },
+    news: {
+      en: `BREAKING NEWS: Localized stomach warning triggered by "${name}" containing ${flagText}! Emergency services advise immediate pantry cleanup!`,
+      hi: `SANSANIKHEZ KHABAR: "${name}" ke packet me mila hai ${flagText} ka deadly combination! Pet ke andar mach chuki hai achanak dhandhali. Savdhan rahein!`
+    }
+  };
+
+  return {
+    dangerLevel,
+    ratingLabel,
+    description: `Real-world snack profile containing processed ${flagText}.`,
+    roast: roasts.mom.en,
+    roasts,
+    suspiciousIngredients,
+    healthySwap: { name: swapName, description: swapDesc },
+    damageReport: { depleted, diseases },
+    scannedAt: new Date().toISOString()
+  };
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('scan');
   const [currentResult, setCurrentResult] = useState(null);
@@ -187,59 +311,11 @@ export default function App() {
         };
       } else if (!apiKey) {
         // Custom product scanned, but no API key is present:
-        // Instead of failing or forcing an API key, we generate a funny generic roast locally!
-        const genericMockData = {
-          dangerLevel: "danger",
-          ratingLabel: "Mystery Danger",
-          description: "A custom scanned snack containing typical packaged chemical ingredients.",
-          ingredients: [
-            { name: "Unspecified Fat (likely Palm Oil)", danger: "danger", info: "Used to keep the shelf life longer than your future." },
-            { name: "Added Refined Sugars", danger: "danger", info: "Designed to keep you coming back for more insulin spikes." },
-            { name: "Chemical Preservatives", danger: "concerning", info: "Keeps this food fresh for years. Might do the same to your organs." }
-          ],
-          healthySwap: {
-            name: "Homemade Roasted Foxnuts (Makhana) or Fresh Fruits",
-            description: "Ditch the mystery packet and eat real whole foods seasoned with salt and pepper!"
-          },
-          damageReport: {
-            depleted: ["Vitamins", "Minerals", "Patience"],
-            diseases: ["Indigestion", "Spiked insulin levels", "Systemic inflammation"]
-          },
-          roasts: {
-            doctor: {
-              en: `Look at this scanned item "${productDetails.name}". Our local scan analysis indicates this is a highly processed formulation! High in refined sodium, cheap fats, and artificial additives. I strongly advise you to put this down before your stomach starts a labor strike.`,
-              hi: `Arre re! Ye kya kha rahe ho? Isme palm oil aur refined sugar ka deadly combo hai. Aapki arteries line me khadi hokar shikaayat kar rahi hain! Kripya isse dur rakhein.`
-            },
-            mom: {
-              en: `Aieee! What is this packet? No brand I know, just chemical dust! Why can't you eat some fresh rotis or soaked almonds? Your cousin Ramesh is running half-marathons and you are scanning barcodes to eat plastic. Stop this immediately!`,
-              hi: `Kya din aagaye hain, ab barcode scan karke zehar khayenge ye janab! Didi ka beta dekho subah doodh pita hai aur tum ye packaged junk kha rahe ho. Chhodo isse abhi!`
-            },
-            comedian: {
-              en: `Congratulations, you scanned a mystery item! The ingredient list looks like a nuclear waste cleanup manifest. The amount of sodium in here could preserve a mammoth. But hey, at least it's tasty for 5 seconds before the heartburn sets in!`,
-              hi: `Bhai, ye packet hai ya chemistry lab ka experiment? Itna sodium hai ki pure mohalle ka blood pressure badh jaye. Do second ki khushi aur fir saari raat acidity!`
-            },
-            professor: {
-              en: `Analyzing this compound reveals a high lipid-to-fiber ratio. The presence of emulsifiers suggests structural stability but physiological volatility. In short, it is a highly engineered calorie carrier. Highly inadvisable.`,
-              hi: `Is padarth ka vishleshan karne par pata chalta hai ki isme refined lipids aur sodium ki matra atyadhik hai. Ye aapke sharer ke liye kisi bhi tarah se upyogi nahi hai.`
-            },
-            news: {
-              en: `BREAKING NEWS: A custom snack scan has triggered alerts in our test labs! Experts warn of high sodium and low nutritional density. The general public is advised to seek immediate healthy alternatives!`,
-              hi: `SANSANIKHEZ KHABAR: Ek aur packaged food hamari test lab me fail ho chuka hai! Janta se anurodh hai ki is chemical bomb se door rahein aur nariyal paani pein!`
-            }
-          }
-        };
-
+        // Analyze the real details fetched from Open Food Facts dynamically on the client side!
+        const localAnalysis = analyzeProductLocally(productDetails);
         finalResult = {
           ...productDetails,
-          dangerLevel: genericMockData.dangerLevel,
-          ratingLabel: genericMockData.ratingLabel,
-          description: genericMockData.description,
-          roast: genericMockData.roasts.mom.en,
-          roasts: genericMockData.roasts,
-          suspiciousIngredients: genericMockData.ingredients,
-          healthySwap: genericMockData.healthySwap,
-          damageReport: genericMockData.damageReport,
-          scannedAt: new Date().toISOString()
+          ...localAnalysis
         };
       } else {
         // Live Gemini Call (when API Key is present)
