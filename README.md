@@ -1,5 +1,7 @@
 # FoodLens Zehar 🔎 👵 👨‍⚕️
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAnilkumawat01%2Ffoodlens-zehar)
+
 FoodLens Zehar is an offline-first, highly interactive, and gamified wellness application designed to expose the chemical, ultra-processing, and nutritional realities of packaged Indian snacks. By utilizing humorous, dramatic "roasting" personas, it translates complex ingredients and E-number chemical additives into straightforward, digestible warnings.
 
 ---
