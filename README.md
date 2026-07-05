@@ -83,7 +83,7 @@ cmd /c npm run dev
 # Or run standard script on other shells:
 npm run dev
 ```
-Open **[http://localhost:5173/](http://localhost:5173/)** in your web browser.
+Open (https://capstone-p7sgiw4vc-anil01.vercel.app/) in your web browser.
 
 ### 3. Build for Production
 To generate a production-ready, highly optimized static build in the `dist` folder:
